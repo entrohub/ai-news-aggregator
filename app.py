@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for
+import threading
+from flask import Flask, render_template, request, redirect, url_for, flash
 from database import init_db, get_articles, get_sources
 from fetcher import fetch_all
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -62,7 +63,8 @@ def index():
 @app.route("/refresh", methods=["POST"])
 def refresh():
     lang = request.form.get("lang", "zh")
-    fetch_all()
+    # Run fetch in background thread to avoid request timeout
+    threading.Thread(target=fetch_all, daemon=True).start()
     return redirect(url_for("index", lang=lang))
 
 

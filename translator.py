@@ -1,14 +1,15 @@
 import os
 from openai import OpenAI
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", ""))
+_api_key = os.environ.get("OPENAI_API_KEY", "")
 
 
 def translate_to_zh(text):
     """Translate text to Chinese using GPT-4o-mini."""
-    if not text or not text.strip():
+    if not text or not text.strip() or not _api_key:
         return text
     try:
+        client = OpenAI(api_key=_api_key)
         resp = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
