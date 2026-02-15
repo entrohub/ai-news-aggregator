@@ -1,9 +1,15 @@
 from flask import Flask, render_template, request, redirect, url_for
 from database import init_db, get_articles, get_sources
 from fetcher import fetch_all
+from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 init_db()
+
+# Auto-refresh every 2 days
+scheduler = BackgroundScheduler()
+scheduler.add_job(fetch_all, "interval", days=2, id="auto_fetch")
+scheduler.start()
 
 TRANSLATIONS = {
     "zh": {

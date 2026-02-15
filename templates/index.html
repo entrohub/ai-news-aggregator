@@ -68,11 +68,12 @@
                 <div class="card-body">
                     <h5 class="card-title">
                         <a href="{{ a.url }}" target="_blank" rel="noopener" class="text-decoration-none">
-                            {{ a.title }}
+                            {% if lang == 'zh' and a.title_zh %}{{ a.title_zh }}{% else %}{{ a.title }}{% endif %}
                         </a>
                     </h5>
-                    {% if a.summary %}
-                    <p class="card-text text-muted small">{{ a.summary[:200] }}{% if a.summary|length > 200 %}…{% endif %}</p>
+                    {% set summary_text = (a.summary_zh if lang == 'zh' and a.summary_zh else a.summary) %}
+                    {% if summary_text %}
+                    <p class="card-text text-muted small">{{ summary_text[:200] }}{% if summary_text|length > 200 %}…{% endif %}</p>
                     {% endif %}
                     <div class="d-flex justify-content-between align-items-center">
                         <div>

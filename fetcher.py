@@ -1,8 +1,10 @@
+import re
 import feedparser
 import requests
 from datetime import datetime
 from time import mktime
 from database import insert_article
+from translator import translate_to_zh
 
 RSS_FEEDS = [
     ("https://rss.arxiv.org/rss/cs.AI", "ArXiv CS.AI", "research"),
@@ -32,8 +34,6 @@ def fetch_rss(url, source_name, category="general"):
             link = entry.get("link", "").strip()
             summary = entry.get("summary", "")
             if summary:
-                # Strip HTML tags roughly
-                import re
                 summary = re.sub(r"<[^>]+>", "", summary)[:300]
 
             published_at = None
@@ -43,7 +43,10 @@ def fetch_rss(url, source_name, category="general"):
                 published_at = datetime.fromtimestamp(mktime(entry.updated_parsed)).isoformat()
 
             if title and link:
-                insert_article(title, link, source_name, category, summary, published_at)
+                title_zh = translate_to_zh(title)
+                summary_zh = translate_to_zh(summary) if summary else None
+                insert_article(title, link, source_name, category, summary,
+                               published_at, title_zh, summary_zh)
     except Exception as e:
         print(f"[RSS Error] {source_name}: {e}")
 
@@ -70,7 +73,9 @@ def fetch_hackernews():
                 if item.get("time"):
                     published_at = datetime.fromtimestamp(item["time"]).isoformat()
 
-                insert_article(title, url, "HackerNews", "discussion", None, published_at)
+                title_zh = translate_to_zh(title)
+                insert_article(title, url, "HackerNews", "discussion", None,
+                               published_at, title_zh, None)
             except Exception:
                 continue
     except Exception as e:
@@ -98,13 +103,18 @@ def fetch_reddit():
                 published_at = datetime.fromtimestamp(p["created_utc"]).isoformat()
 
             if title and url:
-                insert_article(title, url, "Reddit r/artificial", "discussion", selftext, published_at)
+                title_zh = translate_to_zh(title)
+                summary_zh = translate_to_zh(selftext) if selftext else None
+                insert_article(title, url, "Reddit r/artificial", "discussion",
+                               selftext, published_at, title_zh, summary_zh)
     except Exception as e:
         print(f"[Reddit Error]: {e}")
 
 
 def fetch_all():
+    print(f"[Fetch] Starting at {datetime.now().isoformat()}")
     for url, name, cat in RSS_FEEDS:
         fetch_rss(url, name, cat)
     fetch_hackernews()
     fetch_reddit()
+    print(f"[Fetch] Done at {datetime.now().isoformat()}")
